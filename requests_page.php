@@ -8,6 +8,15 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+$username = $_SESSION["username"];
+$sql = "SELECT name, email FROM Administrator WHERE username = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$result = $stmt->get_result();
+$admin = $result->fetch_assoc();
+
+
 // Fetch counts
 $requestCount = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM CertificateRequests WHERE status = 'Request'"))['c'];
 $approvedCount = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM CertificateRequests WHERE status = 'Approved'"))['c'];
@@ -43,6 +52,21 @@ $deniedCount = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM
             margin-bottom: 15px;
             border: 3px solid white;
             background-color: white;
+        }
+
+        .sidebar .username {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .sidebar .email {
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         .sidebar h3 {
@@ -187,9 +211,10 @@ $deniedCount = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM
 
 <!-- Sidebar -->
 <div class="sidebar">
-    <img src="default-avatar.png" alt="Profile">
-    <h3><?php echo $_SESSION['username']; ?></h3>
-    <p>admin@gmail.com</p>
+    <a href="admin_profile.php">
+    <img src="images/profile.jpeg" alt="Profile"></a>
+    <div class="username"><?php echo htmlspecialchars($_SESSION["username"]); ?></div>
+    <div class="email"><?php echo htmlspecialchars($admin["email"]); ?></div>
     <a href="admin_dashboard.php">Menu</a>
     <a href="requests_page.php" class="active">Requests</a>
     <a href="records.php">Records</a>
