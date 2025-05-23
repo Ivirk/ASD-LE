@@ -1,10 +1,20 @@
 <?php
 session_start();
 include 'shjpdb.php';
+
 if (!isset($_SESSION['username'])) {
     header("Location: admin_loginpage.php");
     exit();
 }
+
+// Get admin info
+$username = $_SESSION["username"];
+$sql = "SELECT name, email FROM Administrator WHERE username = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$result = $stmt->get_result();
+$admin = $result->fetch_assoc();
 
 // Handle search
 $search = $_GET['search'] ?? '';
@@ -74,7 +84,6 @@ $result = mysqli_query($conn, $sql);
             transform: translateY(-2px);
         }
 
-        /* Active menu item */
         .sidebar a.active {
             background-color: white;
             color: #8b6914;
@@ -88,7 +97,7 @@ $result = mysqli_query($conn, $sql);
             width: calc(100% - 40px);
             background-color: rgba(0,0,0,0.1) !important;
         }
-        
+
         .logout:hover {
             background-color: rgba(0,0,0,0.2) !important;
         }
@@ -110,27 +119,12 @@ $result = mysqli_query($conn, $sql);
             display: flex;
             align-items: center;
         }
-        
-        .header {
-            font-size: 30px;
+
+        .header img.logo {
+            width: 100px;
             margin-right: 10px;
-            color: #d4af37;
-        }
-        .logo {
-           width: 100px;
         }
 
-        h1 {
-            color: #8b6914;
-            font-size: 24px;
-            margin-top: 30px;
-        }
-
-        p {
-            color: #555;
-            line-height: 1.6;
-        }
-        
         .top-container {
             display: flex;
             justify-content: space-between;
@@ -138,14 +132,14 @@ $result = mysqli_query($conn, $sql);
             gap: 20px;
             margin-bottom: 20px;
         }
-        
+
         .search-bar {
             display: flex;
             gap: 10px;
             min-width: 300px;
             margin: 0;
         }
-        
+
         .search-bar input[type="text"] {
             flex: 1;
             padding: 10px;
@@ -153,7 +147,7 @@ $result = mysqli_query($conn, $sql);
             border-radius: 4px;
             font-family: 'Times New Roman', serif;
         }
-        
+
         .submit-btn, .add-btn {
             background-color: #d4af37;
             color: white;
@@ -167,11 +161,11 @@ $result = mysqli_query($conn, $sql);
             text-decoration: none;
             display: inline-block;
         }
-        
+
         .submit-btn:hover, .add-btn:hover {
             background-color: #b8860b;
         }
-        
+
         .add-btn {
             margin-left: auto;
         }
@@ -185,12 +179,12 @@ $result = mysqli_query($conn, $sql);
             border-radius: 6px;
             transition: transform 0.3s;
         }
-        
+
         .record:hover {
             transform: translateY(-3px);
             box-shadow: 0 6px 18px rgba(0,0,0,0.14);
         }
-        
+
         .record h4 {
             margin: 0 0 12px 0;
             color: #8b6914;
@@ -198,18 +192,51 @@ $result = mysqli_query($conn, $sql);
             padding-bottom: 6px;
             border-bottom: 1px dotted #e6d7ab;
         }
-        
+
         .record p {
             margin: 7px 0;
             color: #555;
             line-height: 1.5;
             font-size: 16px;
         }
-        
+
+        .actions {
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 8px 14px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .action-btn.edit {
+            background-color: #4682B4;
+        }
+
+        .action-btn.edit:hover {
+            background-color: #315f7d;
+        }
+
+        .action-btn.delete {
+            background-color: #B22222;
+        }
+
+        .action-btn.delete:hover {
+            background-color: #7d1616;
+        }
+
         .records-section {
             margin-top: 20px;
         }
-        
+
         .records-header {
             display: flex;
             justify-content: space-between;
@@ -218,7 +245,7 @@ $result = mysqli_query($conn, $sql);
             border-bottom: 1px solid #e6d7ab;
             padding-bottom: 8px;
         }
-        
+
         .records-title {
             color: #8b6914;
             margin: 0;
@@ -230,20 +257,23 @@ $result = mysqli_query($conn, $sql);
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <img src="default-avatar.png" alt="Profile">
+        <a href="admin_profile.php">
+            <img src="images/profile.jpeg" alt="Profile">
+        </a>
         <div class="username"><?php echo htmlspecialchars($_SESSION['username']); ?></div>
-        <div class="email">admin@gmail.com</div>
+        <div class="email"><?php echo htmlspecialchars($admin['email']); ?></div>
 
-        <a href="admin_dashboard.php">Dashboard</a>
+        <a href="admin_dashboard.php">Menu</a>
         <a href="requests_page.php">Requests</a>
-        <a href="records.php" class="active">Records</a>
+        <a href="confirmation_records.php" class="active">Records</a>
         <a href="logout.php" class="logout">Log out</a>
     </div>
 
     <!-- Main content -->
     <div class="main">
         <div class="header">
-            <img src="images/logo2.png" alt="Logo" class="logo"> Sacred Heart of Jesus Parish - Confirmation Records
+            <img src="images/logo2.png" alt="Logo" class="logo">
+            Sacred Heart of Jesus Parish - Confirmation Records
         </div>
 
         <div class="top-container">
@@ -251,7 +281,7 @@ $result = mysqli_query($conn, $sql);
                 <input type="text" name="search" placeholder="Search by name..." value="<?= htmlspecialchars($search) ?>">
                 <input type="submit" value="Search" class="submit-btn">
             </form>
-            
+
             <a href="addconfirmation_record.php" class="add-btn">Add New Record</a>
         </div>
 
@@ -269,6 +299,10 @@ $result = mysqli_query($conn, $sql);
                             <p>Father: " . htmlspecialchars($row['father_name']) . " | Mother: " . htmlspecialchars($row['mother_name']) . "</p>
                             <p>Sponsors: " . htmlspecialchars($row['sponsors']) . "</p>
                             <p>Priest: " . htmlspecialchars($row['priest_name']) . "</p>
+                            <div class='actions'>
+                                <a href='edit_confirmation.php?id=" . $row['confirmationrecord_id'] . "' class='action-btn edit'>Edit</a>
+                                <a href='delete_confirmation.php?id=" . $row['confirmationrecord_id'] . "' class='action-btn delete' onclick='return confirm(\"Are you sure you want to delete this record?\")'>Delete</a>
+                            </div>
                           </div>";
                 }
             } else {
